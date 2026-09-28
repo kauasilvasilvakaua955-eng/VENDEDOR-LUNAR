@@ -10,26 +10,26 @@
 
 <style>
   :root {
-    --purple-glow: #bd00ff;
-    --purple-bright: #9d00ff;
-    --space-bg: #07010f;
-    --card-bg: rgba(18, 5, 32, 0.85);
+    --purple-glow: #651FFF;
+    --purple-bright: #7C4DFF;
+    --space-bg: #070707;
+    --card-bg: rgba(18, 18, 18, 0.9);
     --input-bg: rgba(255, 255, 255, 0.04);
     --ink: #ffffff;
-    --ink-faint: #d8b4fe;
-    --neon-border: rgba(189, 0, 255, 0.5);
+    --ink-faint: #B388FF;
+    --neon-border: rgba(101, 31, 255, 0.6);
     --green: #00ffaa;
     --red-status: #ff4a4a;
-    --radius: 16px;
-    --radius-sm: 10px;
+    --radius: 12px;
+    --radius-sm: 8px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
   body { background-color: var(--space-bg); color: var(--ink); min-height: 100vh; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #vendorWrapper { width: 100%; max-width: 1000px; display: flex; flex-direction: column; align-items: center; }
   header { margin-bottom: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; }
-  .logo-container { width: 120px; height: 120px; border-radius: 20px; padding: 6px; background: linear-gradient(135deg, var(--purple-glow), transparent, var(--purple-bright)); box-shadow: 0 0 35px rgba(189, 0, 255, 0.4); margin-bottom: 1.2rem; }
-  .logo-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+  .logo-container { width: 100px; height: 100px; border-radius: 20px; padding: 4px; background: linear-gradient(135deg, var(--purple-glow), transparent, var(--purple-bright)); box-shadow: 0 0 30px rgba(101, 31, 255, 0.5); margin-bottom: 1rem; }
+  .logo-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
   header h1 { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 2.2rem; letter-spacing: 2px; color: #ffffff; text-shadow: 0 0 15px var(--purple-glow); }
   header h1 span { color: var(--ink-faint); }
   .container { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
@@ -38,7 +38,7 @@
   .form-group { margin-bottom: 1.2rem; }
   label { display: block; font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 0.5rem; }
   input, select { width: 100%; padding: 0.85rem 1rem; background: var(--input-bg); border: 1px solid var(--neon-border); border-radius: var(--radius-sm); color: #ffffff; outline: none; }
-  select option { background: #120520; color: #ffffff; }
+  select option { background: #121212; color: #ffffff; }
   button { padding: 0.6rem 0.8rem; background: linear-gradient(135deg, var(--purple-bright), var(--purple-glow)); color: #ffffff; border: none; border-radius: var(--radius-sm); font-family: 'Orbitron', sans-serif; font-weight: 700; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
   button:hover { opacity: 0.9; transform: scale(0.98); }
   .btn-full { width: 100%; padding: 0.85rem; font-size: 0.85rem; }
@@ -109,7 +109,7 @@
       </div>
 
       <div class="card" style="grid-column: 1 / -1;">
-        <h2>MINHAS KEYS GERADAS</h2>
+        <h2>MINHAS KEYS GERADAS (USERS)</h2>
         <div class="table-responsive">
           <table>
             <thead>
@@ -159,7 +159,7 @@
         return;
       }
 
-      database.ref('keys/vendedor/' + keyInput).once('value', (snapshot) => {
+      database.ref('Vendedores/' + keyInput).once('value', (snapshot) => {
         const data = snapshot.val();
         if (!data || data.status !== 'ativa') {
           errorMsg.innerText = "Key de vendedor inválida ou desativada.";
@@ -176,7 +176,7 @@
         document.getElementById('vendedorNomeDisplay').innerText = data.nomeVendedor || 'Vendedor';
         document.getElementById('creditosDisplay').innerText = data.creditos || 0;
 
-        database.ref('keys/vendedor/' + keyInput + '/creditos').on('value', (snap) => {
+        database.ref('Vendedores/' + keyInput + '/creditos').on('value', (snap) => {
           const val = snap.val() || 0;
           vendedorAtual.creditos = val;
           document.getElementById('creditosDisplay').innerText = val;
@@ -190,7 +190,7 @@
       const nomeVendedor = vendedorAtual.nomeVendedor || vendedorKeyGlobal;
       const tbody = document.getElementById('minhasKeysBody');
 
-      database.ref('keys/proxy').on('value', (snapshot) => {
+      database.ref('Users').on('value', (snapshot) => {
         tbody.innerHTML = '';
         const data = snapshot.val();
         if (!data) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>';
@@ -258,7 +258,7 @@
         return alert(`Saldo insuficiente. O plano de ${dias} dia(s) custa ${custoCreditos} crédito(s).`);
       }
 
-      const codigoKey = await gerarChaveProgressiva('LUNAR-', 'keys/proxy');
+      const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Users');
 
       const dadosKey = {
         status: 'ativa',
@@ -271,24 +271,24 @@
 
       const novosCreditos = vendedorAtual.creditos - custoCreditos;
 
-      await database.ref('keys/vendedor/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
-      await database.ref('keys/proxy/' + codigoKey).set(dadosKey);
+      await database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
+      await database.ref('Users/' + codigoKey).set(dadosKey);
 
       out.style.display = 'block';
       out.innerText = codigoKey;
-      alert(`Key gerada com sucesso! ${custoCreditos} crédito(s) descontado(s).`);
+      alert(`Key gerada com sucesso no nó Users! ${custoCreditos} crédito(s) descontado(s).`);
     }
 
     // ==========================================
-    // AÇÕES DO VENDEDOR PARA SUAS KEYS
+    // AÇÕES DO VENDEDOR PARA SUAS KEYS (Users)
     // ==========================================
     function vendedorAlternarStatusKey(key) {
-      database.ref('keys/proxy/' + key).once('value', (snap) => {
+      database.ref('Users/' + key).once('value', (snap) => {
         const data = snap.val();
         if (!data) return;
 
         const novoStatus = (data.status === 'ativa') ? 'pausada' : 'ativa';
-        database.ref('keys/proxy/' + key).update({ status: novoStatus })
+        database.ref('Users/' + key).update({ status: novoStatus })
           .then(() => alert("Status alterado para: " + novoStatus));
       });
     }
@@ -307,17 +307,17 @@
         return alert(`Saldo insuficiente! Adicionar ${dias} dias custa ${custo} crédito(s).`);
       }
 
-      database.ref('keys/proxy/' + key).once('value', (snap) => {
+      database.ref('Users/' + key).once('value', (snap) => {
         const data = snap.val();
         if (!data) return;
 
         if (confirm(`Confirmar renovação de ${dias} dias por ${custo} crédito(s)?`)) {
           const novosCreditos = vendedorAtual.creditos - custo;
-          database.ref('keys/vendedor/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
+          database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
 
           if (data.dias === "0") {
             const novaValidade = parseInt(data.validade || 0) + dias;
-            database.ref('keys/proxy/' + key).update({ validade: novaValidade.toString(), status: 'ativa' })
+            database.ref('Users/' + key).update({ validade: novaValidade.toString(), status: 'ativa' })
               .then(() => alert("Key renovada!"));
           } else {
             const msAdicionais = dias * 24 * 60 * 60 * 1000;
@@ -325,7 +325,7 @@
             const baseTempo = Math.max(tempoAtual, Date.now());
             const novoTimestamp = baseTempo + msAdicionais;
 
-            database.ref('keys/proxy/' + key).update({ dias: novoTimestamp.toString(), status: 'ativa' })
+            database.ref('Users/' + key).update({ dias: novoTimestamp.toString(), status: 'ativa' })
               .then(() => alert("Key renovada!"));
           }
         }
@@ -334,14 +334,14 @@
 
     function vendedorResetarHWID(key) {
       if (confirm("Resetar o dispositivo/HWID desta key?")) {
-        database.ref('keys/proxy/' + key).update({ device: "" })
+        database.ref('Users/' + key).update({ device: "" })
           .then(() => alert("HWID resetado com sucesso!"));
       }
     }
 
     function vendedorExcluirKey(key) {
       if (confirm("Excluir definitivamente esta key?")) {
-        database.ref('keys/proxy/' + key).remove()
+        database.ref('Users/' + key).remove()
           .then(() => alert("Key excluída!"));
       }
     }
