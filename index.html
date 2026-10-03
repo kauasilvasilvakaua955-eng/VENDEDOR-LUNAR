@@ -105,12 +105,13 @@
       </div> 
 
       <div class="card" style="grid-column: 1 / -1;"> 
-        <h2>MINHAS KEYS GERADAS (USERS)</h2> 
+        <h2>MINHAS KEYS GERADAS (PAINEL_USUARIOS)</h2> 
         <div class="table-responsive"> 
           <table> 
             <thead> 
               <tr> 
-                <th>Código da Key</th> <th>Dias Restantes</th> 
+                <th>Código da Key</th> 
+                <th>Dias Restantes</th> 
                 <th>Status</th> 
                 <th>Ações</th> 
               </tr> 
@@ -125,7 +126,6 @@
   </div> 
 
   <script> 
-    // Atualizado com a sua nova Firebase bielzin-22770
     const firebaseConfig = { 
       apiKey: "AIzaSyDv5UCiG1cD0eOoc0ochBVCz0VvVpnCgjM", 
       databaseURL: "https://bielzin-22770-default-rtdb.firebaseio.com", 
@@ -177,7 +177,7 @@
       const nomeVendedor = vendedorAtual.nomeVendedor || vendedorKeyGlobal; 
       const tbody = document.getElementById('minhasKeysBody'); 
       const agora = Date.now(); 
-      database.ref('Users').on('value', (snapshot) => { 
+      database.ref('Painel_Usuarios').on('value', (snapshot) => { 
         tbody.innerHTML = ''; 
         const data = snapshot.val(); 
         if (!data) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
@@ -250,7 +250,7 @@
       if (vendedorAtual.creditos < custoCreditos) { 
         return alert(`Saldo insuficiente. O plano de ${dias} dia(s) custa ${custoCreditos} crédito(s).`); 
       } 
-      const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Users'); 
+      const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Painel_Usuarios'); 
       const timestampExpiracao = Date.now() + (dias * 24 * 60 * 60 * 1000); 
       const dadosKey = { 
         key: codigoKey, 
@@ -261,18 +261,18 @@
       }; 
       const novosCreditos = vendedorAtual.creditos - custoCreditos; 
       await database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos }); 
-      await database.ref('Users/' + codigoKey).set(dadosKey); 
+      await database.ref('Painel_Usuarios/' + codigoKey).set(dadosKey); 
       out.style.display = 'block'; 
       out.innerText = codigoKey; 
       alert(`Key gerada com sucesso! ${custoCreditos} crédito(s) descontado(s).`); 
     } 
 
     function vendedorAlternarStatusKey(key) { 
-      database.ref('Users/' + key).once('value', (snap) => { 
+      database.ref('Painel_Usuarios/' + key).once('value', (snap) => { 
         const data = snap.val(); 
         if (!data) return; 
         const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online'; 
-        database.ref('Users/' + key).update({ status: novoStatus }) 
+        database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }) 
           .then(() => alert("Status alterado para: " + novoStatus)); 
       }); 
     } 
@@ -287,7 +287,7 @@
       if (vendedorAtual.creditos < custo) { 
         return alert(`Saldo insuficiente! Adicionar ${dias} dias custa ${custo} crédito(s).`); 
       } 
-      database.ref('Users/' + key).once('value', (snap) => { 
+      database.ref('Painel_Usuarios/' + key).once('value', (snap) => { 
         const data = snap.val(); 
         if (!data) return; 
         if (confirm(`Confirmar renovação de ${dias} dias por ${custo} crédito(s)?`)) { 
@@ -297,21 +297,21 @@
           const baseTempo = Math.max(tempoAtual, Date.now()); 
           const msAdicionais = dias * 24 * 60 * 60 * 1000; 
           const novoTimestamp = baseTempo + msAdicionais; 
-          database.ref('Users/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' }).then(() => alert("Key renovada!")); 
+          database.ref('Painel_Usuarios/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' }).then(() => alert("Key renovada!")); 
         } 
       }); 
     } 
 
     function vendedorResetarHWID(key) { 
       if (confirm("Resetar o dispositivo/HWID desta key?")) { 
-        database.ref('Users/' + key).update({ id: "" }) 
+        database.ref('Painel_Usuarios/' + key).update({ id: "" }) 
           .then(() => alert("ID do dispositivo resetado com sucesso!")); 
       } 
     } 
 
     function vendedorExcluirKey(key) { 
       if (confirm("Excluir definitivamente esta key?")) { 
-        database.ref('Users/' + key).remove() 
+        database.ref('Painel_Usuarios/' + key).remove() 
           .then(() => alert("Key excluída!")); 
       } 
     } 
