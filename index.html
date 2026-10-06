@@ -202,15 +202,28 @@
       }); 
     } 
 
+    function formatarTempo(ms) {
+      if (ms <= 0) return "Expirada";
+      const horas = Math.floor(ms / (1000 * 60 * 60));
+      const minutos = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      if (horas < 24) {
+        return `${horas}h ${minutos}m`;
+      } else {
+        const dias = Math.floor(horas / 24);
+        return `${dias} dia(s)`;
+      }
+    }
+
     function carregarMinhasKeys() { 
       const nomeVendedor = vendedorAtual.nomeVendedor || vendedorKeyGlobal; 
       const tbody = document.getElementById('minhasKeysBody'); 
-      const agora = Date.now(); 
       database.ref('Painel_Usuarios').on('value', (snapshot) => { 
         tbody.innerHTML = ''; 
         const data = snapshot.val(); 
         if (!data) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
         let encontrou = false; 
+        const agora = Date.now();
+
         for (let key in data) { 
           const item = data[key]; 
           if (item.geradaPor === nomeVendedor || item.geradaPor === vendedorKeyGlobal) { 
@@ -218,19 +231,12 @@
             let tempoRestanteText = "Expirada"; 
 
             if (item.status === "Não Ativada") {
-              tempoRestanteText = "Aguardando Ativação";
+              const duracaoMs = parseFloat(item.dias || 0);
+              tempoRestanteText = formatarTempo(duracaoMs) + " (Aguardando Ativação)";
             } else if (item.dias) { 
-              const msRestantes = parseFloat(item.dias) - agora; 
-              if (msRestantes > 0) { 
-                const horas = Math.floor(msRestantes / (1000 * 60 * 60));
-                if (horas < 24) {
-                  const minutos = Math.floor((msRestantes % (1000 * 60 * 60)) / (1000 * 60));
-                  tempoRestanteText = horas + "h " + minutos + "m";
-                } else {
-                  const d = Math.floor(horas / 24); 
-                  tempoRestanteText = d + " dia(s)"; 
-                }
-              } 
+              const expiraEm = parseFloat(item.dias);
+              const msRestantes = expiraEm - agora; 
+              tempoRestanteText = formatarTempo(msRestantes);
             } 
 
             tbody.innerHTML += ` 
@@ -323,12 +329,23 @@
       database.ref('Painel_Usuarios/' + key).once('value', (snap) => { 
         const data = snap.val(); 
         if (!data) return; 
-        const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online'; 
-        database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }) 
-          .then(() => {
-            registrarLogVendedor("Alterou Status", `Alterou status da Key ${key} para ${novoStatus}.`);
-            alert("Status alterado para: " + novoStatus);
-          }); 
+
+        if (data.status === "Não Ativada") {
+          const duracaoMs = parseFloat(data.dias || 0);
+          const timestampExpiracao = Date.now() + duracaoMs;
+          database.ref('Painel_Usuarios/' + key).update({ status: 'Online', dias: timestampExpiracao.toString() })
+            .then(() => {
+              registrarLogVendedor("Ativou Key", `Ativou a Key ${key}. Contagem iniciada.`);
+              alert("Key ativada com sucesso!");
+            });
+        } else {
+          const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online'; 
+          database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }) 
+            .then(() => {
+              registrarLogVendedor("Alterou Status", `Alterou status da Key ${key} para ${novoStatus}.`);
+              alert("Status alterado para: " + novoStatus);
+            }); 
+        }
       }); 
     } 
 
@@ -354,8 +371,8 @@
             const duracaoAtual = parseFloat(data.dias || 0);
             database.ref('Painel_Usuarios/' + key).update({ dias: (duracaoAtual + msAdicionais).toString() });
           } else {
-            const tempoAtual = parseFloat(data.dias || Date.now()); 
-            const baseTempo = Math.max(tempoAtual, Date.now()); 
+            const expiraAtual = parseFloat(data.dias || Date.now()); 
+            const baseTempo = Math.max(expiraAtual, Date.now()); 
             const novoTimestamp = baseTempo + msAdicionais; 
             database.ref('Painel_Usuarios/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' });
           }
