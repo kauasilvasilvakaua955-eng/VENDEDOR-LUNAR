@@ -113,11 +113,12 @@
                 <th>Código da Key</th> 
                 <th>Dias Restantes</th> 
                 <th>Status</th> 
+                <th>ID Dispositivo (HWID)</th> 
                 <th>Ações</th> 
               </tr> 
             </thead> 
             <tbody id="minhasKeysBody"> 
-              <tr><td colspan="4" style="text-align: center;">Carregando suas chaves...</td></tr> 
+              <tr><td colspan="5" style="text-align: center;">Carregando suas chaves...</td></tr> 
             </tbody> 
           </table> 
         </div> 
@@ -139,6 +140,15 @@
     let vendedorAtual = null; 
     let vendedorKeyGlobal = null; 
     const TABELA_CREDITOS = { 1: 1, 3: 3, 7: 6, 15: 12, 30: 20 }; 
+
+    function registrarLogVendedor(acao, detalhes) {
+      if (!vendedorKeyGlobal) return;
+      database.ref('Logs_Vendedores/' + vendedorKeyGlobal).push({
+        data: new Date().toISOString(),
+        acao: acao,
+        detalhes: detalhes
+      });
+    }
 
     function autenticarVendedor() { 
       const keyInput = document.getElementById('vendorKeyInput').value.trim(); 
@@ -163,6 +173,8 @@
         document.getElementById('vendedorKeyDisplay').innerText = keyInput; 
         document.getElementById('vendedorNomeDisplay').innerText = data.nomeVendedor || 'Vendedor'; 
         document.getElementById('creditosDisplay').innerText = data.creditos || 0; 
+
+        registrarLogVendedor("Acesso Realizado", "Acessou o painel de vendedor com sucesso.");
         
         database.ref('Vendedores/' + keyInput + '/creditos').on('value', (snap) => { 
           const val = snap.val() || 0; 
@@ -180,25 +192,30 @@
       database.ref('Painel_Usuarios').on('value', (snapshot) => { 
         tbody.innerHTML = ''; 
         const data = snapshot.val(); 
-        if (!data) return tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
+        if (!data) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
         let encontrou = false; 
         for (let key in data) { 
           const item = data[key]; 
           if (item.geradaPor === nomeVendedor || item.geradaPor === vendedorKeyGlobal) { 
             encontrou = true; 
             let diasRestantesText = "Expirada"; 
-            if (item.dias) { 
+
+            if (item.status === "Não Ativada") {
+              diasRestantesText = "Aguardando Ativação";
+            } else if (item.dias) { 
               const msRestantes = parseFloat(item.dias) - agora; 
               if (msRestantes > 0) { 
                 const d = Math.floor((((msRestantes / 1000) / 60) / 60) / 24); 
                 diasRestantesText = d + " dia(s)"; 
               } 
             } 
+
             tbody.innerHTML += ` 
               <tr> 
                 <td style="font-family: monospace; font-weight: bold; color: var(--purple-glow);">${item.key || key}</td> 
                 <td>${diasRestantesText}</td> 
-                <td><strong style="color: ${item.status === 'Online' ? 'var(--green)' : 'var(--red-status)'}">${item.status || 'Offline'}</strong></td> 
+                <td><strong style="color: ${item.status === 'Online' ? 'var(--green)' : (item.status === 'Não Ativada' ? '#ffaa00' : 'var(--red-status)')}">${item.status || 'Offline'}</strong></td> 
+                <td style="font-size:0.75rem; font-family: monospace; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.id || 'Nenhum (Livre)'}</td> 
                 <td> 
                   <div class="action-btns"> 
                     <button class="btn-warning" onclick="vendedorAlternarStatusKey('${key}')">${item.status === 'Online' ? 'Pausar' : 'Ativar'}</button> 
@@ -211,7 +228,7 @@
             `; 
           } 
         } 
-        if (!encontrou) tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
+        if (!encontrou) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
       }); 
     } 
 
@@ -251,20 +268,25 @@
         return alert(`Saldo insuficiente. O plano de ${dias} dia(s) custa ${custoCreditos} crédito(s).`); 
       } 
       const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Painel_Usuarios'); 
-      const timestampExpiracao = Date.now() + (dias * 24 * 60 * 60 * 1000); 
+      const duracaoMs = dias * 24 * 60 * 60 * 1000; 
+
       const dadosKey = { 
         key: codigoKey, 
-        status: "Online", 
-        dias: timestampExpiracao.toString(), 
+        status: "Não Ativada", 
+        dias: duracaoMs.toString(), 
         id: "", 
         geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal 
       }; 
+
       const novosCreditos = vendedorAtual.creditos - custoCreditos; 
       await database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos }); 
       await database.ref('Painel_Usuarios/' + codigoKey).set(dadosKey); 
+      
+      registrarLogVendedor("Gerou Key", `Gerou a Key ${codigoKey} (${dias} dias) por ${custoCreditos} créditos.`);
+
       out.style.display = 'block'; 
       out.innerText = codigoKey; 
-      alert(`Key gerada com sucesso! ${custoCreditos} crédito(s) descontado(s).`); 
+      alert(`Key gerada com sucesso! ${custoCreditos} crédito(s) descontado(s). A contagem só iniciará no primeiro uso.`); 
     } 
 
     function vendedorAlternarStatusKey(key) { 
@@ -273,7 +295,10 @@
         if (!data) return; 
         const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online'; 
         database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }) 
-          .then(() => alert("Status alterado para: " + novoStatus)); 
+          .then(() => {
+            registrarLogVendedor("Alterou Status", `Alterou status da Key ${key} para ${novoStatus}.`);
+            alert("Status alterado para: " + novoStatus);
+          }); 
       }); 
     } 
 
@@ -293,11 +318,20 @@
         if (confirm(`Confirmar renovação de ${dias} dias por ${custo} crédito(s)?`)) { 
           const novosCreditos = vendedorAtual.creditos - custo; 
           database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos }); 
-          const tempoAtual = parseFloat(data.dias || Date.now()); 
-          const baseTempo = Math.max(tempoAtual, Date.now()); 
+          
           const msAdicionais = dias * 24 * 60 * 60 * 1000; 
-          const novoTimestamp = baseTempo + msAdicionais; 
-          database.ref('Painel_Usuarios/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' }).then(() => alert("Key renovada!")); 
+          if (data.status === "Não Ativada") {
+            const duracaoAtual = parseFloat(data.dias || 0);
+            database.ref('Painel_Usuarios/' + key).update({ dias: (duracaoAtual + msAdicionais).toString() });
+          } else {
+            const tempoAtual = parseFloat(data.dias || Date.now()); 
+            const baseTempo = Math.max(tempoAtual, Date.now()); 
+            const novoTimestamp = baseTempo + msAdicionais; 
+            database.ref('Painel_Usuarios/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' });
+          }
+
+          registrarLogVendedor("Renovou Key", `Renovou a Key ${key} por +${dias} dias (${custo} créditos).`);
+          alert("Key renovada!"); 
         } 
       }); 
     } 
@@ -305,14 +339,20 @@
     function vendedorResetarHWID(key) { 
       if (confirm("Resetar o dispositivo/HWID desta key?")) { 
         database.ref('Painel_Usuarios/' + key).update({ id: "" }) 
-          .then(() => alert("ID do dispositivo resetado com sucesso!")); 
+          .then(() => {
+            registrarLogVendedor("Reset HWID", `Resetou o HWID da Key ${key}.`);
+            alert("ID do dispositivo resetado com sucesso!");
+          }); 
       } 
     } 
 
     function vendedorExcluirKey(key) { 
       if (confirm("Excluir definitivamente esta key?")) { 
         database.ref('Painel_Usuarios/' + key).remove() 
-          .then(() => alert("Key excluída!")); 
+          .then(() => {
+            registrarLogVendedor("Excluiu Key", `Excluiu permanentemente a Key ${key}.`);
+            alert("Key excluída!");
+          }); 
       } 
     } 
   </script> 
