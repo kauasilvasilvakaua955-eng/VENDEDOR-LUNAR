@@ -147,7 +147,6 @@
     let vendedorAtual = null; 
     let vendedorKeyGlobal = null; 
 
-    // Mapeamento idêntico ao Admin: 1h, 6h e 12h custando 1 crédito
     const CONFIG_PLANOS = {
       '1h':  { creditos: 1,  ms: 1 * 60 * 60 * 1000, label: '1 Hora' },
       '6h':  { creditos: 1,  ms: 6 * 60 * 60 * 1000, label: '6 Horas' },
@@ -304,7 +303,9 @@
         status: "Não Ativada", 
         dias: config.ms.toString(), 
         id: "", 
-        geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal 
+        geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal,
+        custoCredito: custoCreditos,
+        criadaEm: Date.now()
       }; 
 
       const novosCreditos = vendedorAtual.creditos - custoCreditos; 
@@ -377,11 +378,27 @@
 
     function vendedorExcluirKey(key) { 
       if (confirm("Excluir definitivamente esta key?")) { 
-        database.ref('Painel_Usuarios/' + key).remove() 
-          .then(() => {
+        database.ref('Painel_Usuarios/' + key).once('value', (snap) => {
+          const data = snap.val();
+          if (!data) return;
+
+          const agora = Date.now();
+          const tempoDecorrido = agora - (data.criadaEm || 0);
+          const umaHoraEmMs = 60 * 60 * 1000;
+          const custo = data.custoCredito || 1;
+
+          if (data.criadaEm && tempoDecorrido <= umaHoraEmMs) {
+            const novosCreditos = (vendedorAtual.creditos || 0) + custo;
+            database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
+            alert(`Key excluída dentro de 1 hora! ${custo} crédito(s) foram devolvidos.`);
+            registrarLogVendedor("Excluiu Key (Estorno)", `Excluiu a Key ${key} dentro de 1h e recebeu ${custo} crédito(s) de volta.`);
+          } else {
+            alert("Key excluída! Passado mais de 1 hora da criação, o crédito não foi devolvido.");
             registrarLogVendedor("Excluiu Key", `Excluiu permanentemente a Key ${key}.`);
-            alert("Key excluída!");
-          }); 
+          }
+
+          database.ref('Painel_Usuarios/' + key).remove();
+        });
       } 
     } 
   </script> 
