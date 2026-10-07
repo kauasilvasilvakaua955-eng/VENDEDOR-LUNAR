@@ -1,206 +1,480 @@
-<!DOCTYPE html> 
-<html lang="pt-BR"> 
-<head> 
-  <meta charset="UTF-8" /> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
-  <title>LUNAR CHEATS — Painel Vendedor</title> 
-  <link rel="preconnect" href="https://fonts.googleapis.com"> 
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"> 
-  <style> 
-    :root { 
-      --purple-glow: #651FFF; 
-      --purple-bright: #7C4DFF; 
-      --space-bg: #070707; 
-      --card-bg: rgba(18, 18, 18, 0.9); 
-      --input-bg: rgba(255, 255, 255, 0.04); 
-      --ink: #ffffff; 
-      --ink-faint: #B388FF; 
-      --neon-border: rgba(101, 31, 255, 0.6); 
-      --green: #00ffaa; 
-      --red-status: #ff4a4a; 
-      --radius: 12px; 
-      --radius-sm: 8px; 
-    } 
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; } 
-    body { background-color: var(--space-bg); color: var(--ink); min-height: 100vh; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; } 
-    #vendorWrapper { width: 100%; max-width: 1000px; display: flex; flex-direction: column; align-items: center; } 
-    header { margin-bottom: 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; } 
-    .logo-container { width: 100px; height: 100px; border-radius: 20px; padding: 4px; background: linear-gradient(135deg, var(--purple-glow), transparent, var(--purple-bright)); box-shadow: 0 0 30px rgba(101, 31, 255, 0.5); margin-bottom: 1rem; } 
-    .logo-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; } 
-    header h1 { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 2.2rem; letter-spacing: 2px; color: #ffffff; text-shadow: 0 0 15px var(--purple-glow); } 
-    header h1 span { color: var(--ink-faint); } 
-    .container { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; } 
-    .card { background: var(--card-bg); border: 1px solid var(--neon-border); border-radius: var(--radius); padding: 1.8rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8); backdrop-filter: blur(16px); position: relative; } 
-    .card h2 { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: #ffffff; margin-bottom: 1.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.6rem; } 
-    .form-group { margin-bottom: 1.2rem; } 
-    label { display: block; font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 0.5rem; } 
-    input, select { width: 100%; padding: 0.85rem 1rem; background: var(--input-bg); border: 1px solid var(--neon-border); border-radius: var(--radius-sm); color: #ffffff; outline: none; } 
-    select option { background: #121212; color: #ffffff; } 
-    button { padding: 0.6rem 0.8rem; background: linear-gradient(135deg, var(--purple-bright), var(--purple-glow)); color: #ffffff; border: none; border-radius: var(--radius-sm); font-family: 'Orbitron', sans-serif; font-weight: 700; cursor: pointer; font-size: 0.75rem; transition: 0.2s; } 
-    button:hover { opacity: 0.9; transform: scale(0.98); } 
-    .btn-full { width: 100%; padding: 0.85rem; font-size: 0.85rem; } 
-    .btn-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--neon-border); } 
-    .btn-danger { background: linear-gradient(135deg, #ff2a2a, #990000); } 
-    .btn-warning { background: linear-gradient(135deg, #ffaa00, #996600); } 
-    .btn-success { background: linear-gradient(135deg, #00cc66, #006633); } 
-    .credit-box { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--neon-border); border-radius: var(--radius-sm); padding: 1rem; text-align: center; margin-bottom: 1.2rem; } 
-    .credit-box .amount { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: var(--green); } 
-    .key-output { margin-top: 1rem; padding: 0.85rem; background: rgba(0, 0, 0, 0.6); border: 1px dashed var(--green); border-radius: var(--radius-sm); font-family: 'JetBrains Mono', monospace; color: var(--green); word-break: break-all; text-align: center; display: none; } 
-    .table-responsive { overflow-x: auto; margin-top: 1rem; } 
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; } 
-    th, td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); white-space: nowrap; } 
-    th { font-family: 'Orbitron', sans-serif; color: var(--ink-faint); } 
-    #loginCard { max-width: 420px; width: 100%; display: block; } 
-    .error-msg { color: var(--red-status); font-size: 0.85rem; margin-top: 0.8rem; text-align: center; display: none; } 
-    .action-btns { display: flex; gap: 0.3rem; } 
-  </style> 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script> 
-</head> 
-<body> 
-  <div id="vendorWrapper"> 
-    <header> 
-      <div class="logo-container"><img src="logo.png" alt="Logo" onerror="this.src='logo.png'"></div> 
-      <h1>LUNAR <span>CHEATS</span></h1> 
-      <p style="color: var(--ink-faint); font-size: 0.85rem; letter-spacing: 2px;">PAINEL DO VENDEDOR</p> 
-    </header> 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUNAR CHEATS — Painel Vendedor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple-glow: #651FFF;
+      --purple-bright: #7C4DFF;
+      --space-bg: #070707;
+      --card-bg: rgba(18, 18, 18, 0.9);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --ink: #ffffff;
+      --ink-faint: #B388FF;
+      --neon-border: rgba(101, 31, 255, 0.6);
+      --green: #00ffaa;
+      --red-status: #ff4a4a;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      background-color: var(--space-bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #vendorWrapper {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .logo-container {
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      padding: 4px;
+      background: linear-gradient(135deg, var(--purple-glow), transparent, var(--purple-bright));
+      box-shadow: 0 0 30px rgba(101, 31, 255, 0.5);
+      margin-bottom: 1rem;
+    }
+    .logo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 16px;
+    }
+    header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 0 15px var(--purple-glow);
+    }
+    header h1 span { color: var(--ink-faint); }
+    .container {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--neon-border);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+      position: relative;
+    }
+    .card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin-bottom: 1.2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 0.6rem;
+    }
+    .form-group { margin-bottom: 1.2rem; }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--ink-faint);
+      margin-bottom: 0.5rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--neon-border);
+      border-radius: var(--radius-sm);
+      color: #ffffff;
+      outline: none;
+    }
+    select option { background: #121212; color: #ffffff; }
+    button {
+      padding: 0.6rem 0.8rem;
+      background: linear-gradient(135deg, var(--purple-bright), var(--purple-glow));
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: 0.2s;
+    }
+    button:hover { opacity: 0.9; transform: scale(0.98); }
+    .btn-full { width: 100%; padding: 0.85rem; font-size: 0.85rem; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--neon-border); }
+    .btn-danger { background: linear-gradient(135deg, #ff2a2a, #990000); }
+    .btn-warning { background: linear-gradient(135deg, #ffaa00, #996600); }
+    .btn-success { background: linear-gradient(135deg, #00cc66, #006633); }
+    .credit-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--neon-border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+    .credit-box .amount {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      color: var(--green);
+    }
+    .key-output {
+      margin-top: 1rem;
+      padding: 0.85rem;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px dashed var(--green);
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--green);
+      word-break: break-all;
+      text-align: center;
+      display: none;
+    }
+    .table-responsive { overflow-x: auto; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th, td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); white-space: nowrap; }
+    th { font-family: 'Orbitron', sans-serif; color: var(--ink-faint); }
+    #loginCard { max-width: 420px; width: 100%; display: block; }
+    .error-msg { color: var(--red-status); font-size: 0.85rem; margin-top: 0.8rem; text-align: center; display: none; }
+    .action-btns { display: flex; gap: 0.3rem; }
 
-    <div id="loginCard" class="card"> 
-      <h2>Acesso Vendedor</h2> 
-      <div class="form-group"> 
-        <label>Chave de Acesso (Key Vendedor)</label> 
-        <input type="text" id="vendorKeyInput" placeholder="Ex: VEND-XXXXX" /> 
-      </div> 
-      <button class="btn-full" onclick="autenticarVendedor()">ENTRAR NO PAINEL</button> 
-      <div id="loginError" class="error-msg"></div> 
-    </div> 
+    /* Estilos do Popup Modal */
+    .lunar-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .lunar-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .lunar-modal {
+      background: var(--card-bg);
+      border: 1px solid var(--neon-border);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 0 30px rgba(101, 31, 255, 0.4);
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.25s ease;
+    }
+    .lunar-modal-overlay.active .lunar-modal {
+      transform: scale(1);
+    }
+    .lunar-modal h3 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--ink-faint);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .lunar-modal p {
+      font-size: 0.9rem;
+      color: #ddd;
+      margin-bottom: 1.5rem;
+      white-space: pre-line;
+      word-break: break-all;
+    }
+    .lunar-modal input {
+      margin-bottom: 1.2rem;
+    }
+    .lunar-modal-btns {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div id="vendorWrapper">
+    <header>
+      <div class="logo-container"><img src="logo.png" alt="Logo" onerror="this.src='logo.png'"></div>
+      <h1>LUNAR <span>CHEATS</span></h1>
+      <p style="color: var(--ink-faint); font-size: 0.85rem; letter-spacing: 2px;">PAINEL DO VENDEDOR</p>
+    </header>
 
-    <div id="mainPanel" class="container" style="display: none;"> 
-      <div class="card"> 
-        <h2>MINHA CONTA</h2> 
-        <div class="credit-box"> 
-          <span style="font-size: 0.8rem; color: var(--ink-faint); display: block;">CRÉDITOS DISPONÍVEIS</span> 
-          <span id="creditosDisplay" class="amount">0</span> 
-        </div> 
-        <p style="font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 0.4rem;"><strong>Vendedor:</strong> <span id="vendedorNomeDisplay" style="color: #ffffff;">-</span></p> 
-        <p style="font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 1.2rem;"><strong>Key:</strong> <span id="vendedorKeyDisplay" style="font-family: monospace; color: var(--purple-glow);">-</span></p> 
-        <button class="btn-full btn-secondary" onclick="sairPainel()">SAIR DA CONTA</button> 
-      </div> 
+    <div id="loginCard" class="card">
+      <h2>Acesso Vendedor</h2>
+      <div class="form-group">
+        <label>Chave de Acesso (Key Vendedor)</label>
+        <input type="text" id="vendorKeyInput" placeholder="Ex: VEND-XXXXX" />
+      </div>
+      <button class="btn-full" onclick="autenticarVendedor()">ENTRAR NO PAINEL</button>
+      <div id="loginError" class="error-msg"></div>
+    </div>
 
-      <div class="card"> 
-        <h2>GERAR KEY DE CLIENTE</h2> 
-        <div class="form-group"> 
-          <label>Selecione a Validade da Key</label> 
-          <select id="selectPlano"> 
+    <div id="mainPanel" class="container" style="display: none;">
+      <div class="card">
+        <h2>MINHA CONTA</h2>
+        <div class="credit-box">
+          <span style="font-size: 0.8rem; color: var(--ink-faint); display: block;">CRÉDITOS DISPONÍVEIS</span>
+          <span id="creditosDisplay" class="amount">0</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 0.4rem;"><strong>Vendedor:</strong> <span id="vendedorNomeDisplay" style="color: #ffffff;">-</span></p>
+        <p style="font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 1.2rem;"><strong>Key:</strong> <span id="vendedorKeyDisplay" style="font-family: monospace; color: var(--purple-glow);">-</span></p>
+        <button class="btn-full btn-secondary" onclick="sairPainel()">SAIR DA CONTA</button>
+      </div>
+
+      <div class="card">
+        <h2>GERAR KEY DE CLIENTE</h2>
+        <div class="form-group">
+          <label>Selecione a Validade da Key</label>
+          <select id="selectPlano">
             <optgroup label="⏰ Opções em Horas (1 Crédito)">
-              <option value="1h">1 Hora — 1 Crédito</option> 
-              <option value="6h">6 Horas — 1 Crédito</option> 
-              <option value="12h">12 Horas — 1 Crédito</option> 
+              <option value="1h">1 Hora — 1 Crédito</option>
+              <option value="6h">6 Horas — 1 Crédito</option>
+              <option value="12h">12 Horas — 1 Crédito</option>
             </optgroup>
             <optgroup label="📅 Opções em Dias">
-              <option value="1d">1 Dia — 1 Crédito</option> 
-              <option value="3d">3 Dias — 3 Créditos</option> 
-              <option value="7d">7 Dias — 6 Créditos</option> 
-              <option value="15d">15 Dias — 12 Créditos</option> 
-              <option value="30d">30 Dias — 20 Créditos</option> 
+              <option value="1d">1 Dia — 1 Crédito</option>
+              <option value="3d">3 Dias — 3 Créditos</option>
+              <option value="7d">7 Dias — 6 Créditos</option>
+              <option value="15d">15 Dias — 12 Créditos</option>
+              <option value="30d">30 Dias — 20 Créditos</option>
             </optgroup>
-          </select> 
-        </div> 
-        <button class="btn-full" onclick="gerarKeyCliente()">GERAR KEY CLIENTE</button> 
-        <div id="outputCliente" class="key-output"></div> 
-      </div> 
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantidade de Keys (Em branco = 1)</label>
+          <input type="number" id="qtdKeys" min="1" placeholder="Ex: 1 ou deixe em branco" />
+        </div>
+        <button class="btn-full" onclick="gerarKeyCliente()">GERAR KEY CLIENTE</button>
+        <div id="outputCliente" class="key-output"></div>
+      </div>
 
-      <div class="card" style="grid-column: 1 / -1;"> 
-        <h2>MINHAS KEYS GERADAS (PAINEL_USUARIOS)</h2> 
-        <div class="table-responsive"> 
-          <table> 
-            <thead> 
-              <tr> 
-                <th>Código da Key</th> 
-                <th>Tempo Restante</th> 
-                <th>Status</th> 
-                <th>ID Dispositivo (HWID)</th> 
-                <th>Ações</th> 
-              </tr> 
-            </thead> 
-            <tbody id="minhasKeysBody"> 
-              <tr><td colspan="5" style="text-align: center;">Carregando suas chaves...</td></tr> 
-            </tbody> 
-          </table> 
-        </div> 
-      </div> 
-    </div> 
-  </div> 
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>MINHAS KEYS GERADAS (PAINEL_USUARIOS)</h2>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Código da Key</th>
+                <th>Tempo Restante</th>
+                <th>Status</th>
+                <th>ID Dispositivo (HWID)</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="minhasKeysBody">
+              <tr><td colspan="5" style="text-align: center;">Carregando suas chaves...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script> 
-    const firebaseConfig = { 
-      apiKey: "AIzaSyDv5UCiG1cD0eOoc0ochBVCz0VvVpnCgjM", 
-      databaseURL: "https://bielzin-22770-default-rtdb.firebaseio.com", 
-      projectId: "bielzin-22770", 
-      storageBucket: "bielzin-22770.firebasestorage.app" 
-    }; 
+  <!-- Componente de Modal Popup Customizado -->
+  <div id="lunarModalOverlay" class="lunar-modal-overlay">
+    <div class="lunar-modal">
+      <h3 id="lunarModalTitle">LUNAR CHEATS</h3>
+      <p id="lunarModalMessage"></p>
+      <div id="lunarModalInputContainer" style="display:none;">
+        <input type="text" id="lunarModalInput" placeholder="" />
+      </div>
+      <div id="lunarModalBtns" class="lunar-modal-btns"></div>
+    </div>
+  </div>
 
-    firebase.initializeApp(firebaseConfig); 
-    const database = firebase.database(); 
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDv5UCiG1cD0eOoc0ochBVCz0VvVpnCgjM",
+      databaseURL: "https://bielzin-22770-default-rtdb.firebaseio.com",
+      projectId: "bielzin-22770",
+      storageBucket: "bielzin-22770.firebasestorage.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-    let vendedorAtual = null; 
-    let vendedorKeyGlobal = null; 
+    let vendedorAtual = null;
+    let vendedorKeyGlobal = null;
+    let logsSessao = [];
 
     const CONFIG_PLANOS = {
-      '1h':  { creditos: 1,  ms: 1 * 60 * 60 * 1000, label: '1 Hora' },
-      '6h':  { creditos: 1,  ms: 6 * 60 * 60 * 1000, label: '6 Horas' },
-      '12h': { creditos: 1,  ms: 12 * 60 * 60 * 1000, label: '12 Horas' },
-      '1d':  { creditos: 1,  ms: 1 * 24 * 60 * 60 * 1000, label: '1 Dia' },
-      '3d':  { creditos: 3,  ms: 3 * 24 * 60 * 60 * 1000, label: '3 Dias' },
-      '7d':  { creditos: 6,  ms: 7 * 24 * 60 * 60 * 1000, label: '7 Dias' },
+      '1h':  { creditos: 1,  ms: 1 * 60 * 60 * 1000,       label: '1 Hora' },
+      '6h':  { creditos: 1,  ms: 6 * 60 * 60 * 1000,       label: '6 Horas' },
+      '12h': { creditos: 1,  ms: 12 * 60 * 60 * 1000,      label: '12 Horas' },
+      '1d':  { creditos: 1,  ms: 1 * 24 * 60 * 60 * 1000,  label: '1 Dia' },
+      '3d':  { creditos: 3,  ms: 3 * 24 * 60 * 60 * 1000,  label: '3 Dias' },
+      '7d':  { creditos: 6,  ms: 7 * 24 * 60 * 60 * 1000,  label: '7 Dias' },
       '15d': { creditos: 12, ms: 15 * 24 * 60 * 60 * 1000, label: '15 Dias' },
       '30d': { creditos: 20, ms: 30 * 24 * 60 * 60 * 1000, label: '30 Dias' }
     };
 
+    function mostrarPopup(mensagem, titulo = "LUNAR CHEATS") {
+      return new Promise((resolve) => {
+        const overlay = document.getElementById('lunarModalOverlay');
+        document.getElementById('lunarModalTitle').innerText = titulo;
+        document.getElementById('lunarModalMessage').innerText = mensagem;
+        document.getElementById('lunarModalInputContainer').style.display = 'none';
+        const btns = document.getElementById('lunarModalBtns');
+        btns.innerHTML = '';
+
+        const btnOk = document.createElement('button');
+        btnOk.className = 'btn-full';
+        btnOk.innerText = 'OK';
+        btnOk.onclick = () => {
+          overlay.classList.remove('active');
+          resolve(true);
+        };
+        btns.appendChild(btnOk);
+        overlay.classList.add('active');
+      });
+    }
+
+    function mostrarConfirmacao(mensagem, titulo = "LUNAR CHEATS") {
+      return new Promise((resolve) => {
+        const overlay = document.getElementById('lunarModalOverlay');
+        document.getElementById('lunarModalTitle').innerText = titulo;
+        document.getElementById('lunarModalMessage').innerText = mensagem;
+        document.getElementById('lunarModalInputContainer').style.display = 'none';
+        const btns = document.getElementById('lunarModalBtns');
+        btns.innerHTML = '';
+
+        const btnSim = document.createElement('button');
+        btnSim.className = 'btn-success';
+        btnSim.style.flex = '1';
+        btnSim.innerText = 'SIM';
+        btnSim.onclick = () => {
+          overlay.classList.remove('active');
+          resolve(true);
+        };
+
+        const btnNao = document.createElement('button');
+        btnNao.className = 'btn-danger';
+        btnNao.style.flex = '1';
+        btnNao.innerText = 'NÃO';
+        btnNao.onclick = () => {
+          overlay.classList.remove('active');
+          resolve(false);
+        };
+
+        btns.appendChild(btnSim);
+        btns.appendChild(btnNao);
+        overlay.classList.add('active');
+      });
+    }
+
+    function mostrarPrompt(mensagem, placeholder = "", titulo = "LUNAR CHEATS") {
+      return new Promise((resolve) => {
+        const overlay = document.getElementById('lunarModalOverlay');
+        document.getElementById('lunarModalTitle').innerText = titulo;
+        document.getElementById('lunarModalMessage').innerText = mensagem;
+        
+        const inputContainer = document.getElementById('lunarModalInputContainer');
+        const input = document.getElementById('lunarModalInput');
+        inputContainer.style.display = 'block';
+        input.value = '';
+        input.placeholder = placeholder;
+
+        const btns = document.getElementById('lunarModalBtns');
+        btns.innerHTML = '';
+
+        const btnOk = document.createElement('button');
+        btnOk.className = 'btn-full';
+        btnOk.innerText = 'CONFIRMAR';
+        btnOk.onclick = () => {
+          const val = input.value.trim();
+          overlay.classList.remove('active');
+          resolve(val);
+        };
+
+        const btnCancelar = document.createElement('button');
+        btnCancelar.className = 'btn-secondary';
+        btnCancelar.innerText = 'CANCELAR';
+        btnCancelar.onclick = () => {
+          overlay.classList.remove('active');
+          resolve(null);
+        };
+
+        btns.appendChild(btnOk);
+        btns.appendChild(btnCancelar);
+        overlay.classList.add('active');
+      });
+    }
+
     function registrarLogVendedor(acao, detalhes) {
-      if (!vendedorKeyGlobal) return;
-      database.ref('Logs_Vendedores/' + vendedorKeyGlobal).push({
+      logsSessao.push({
         data: new Date().toISOString(),
         acao: acao,
         detalhes: detalhes
       });
     }
 
-    function autenticarVendedor() { 
-      const keyInput = document.getElementById('vendorKeyInput').value.trim(); 
-      const errorMsg = document.getElementById('loginError'); 
-      errorMsg.style.display = 'none'; 
-      if (!keyInput) { 
-        errorMsg.innerText = "Informe sua Key de Vendedor."; 
-        errorMsg.style.display = 'block'; 
-        return; 
-      } 
-      database.ref('Vendedores/' + keyInput).once('value', (snapshot) => { 
-        const data = snapshot.val(); 
-        if (!data || data.status !== 'ativa') { 
-          errorMsg.innerText = "Key de vendedor inválida ou desativada."; 
-          errorMsg.style.display = 'block'; 
-          return; 
-        } 
-        vendedorAtual = data; 
-        vendedorKeyGlobal = keyInput; 
-        document.getElementById('loginCard').style.display = 'none'; 
-        document.getElementById('mainPanel').style.display = 'grid'; 
-        document.getElementById('vendedorKeyDisplay').innerText = keyInput; 
-        document.getElementById('vendedorNomeDisplay').innerText = data.nomeVendedor || 'Vendedor'; 
-        document.getElementById('creditosDisplay').innerText = data.creditos || 0; 
+    function autenticarVendedor() {
+      const keyInput = document.getElementById('vendorKeyInput').value.trim();
+      const errorMsg = document.getElementById('loginError');
+      errorMsg.style.display = 'none';
+
+      if (!keyInput) {
+        errorMsg.innerText = "Informe sua Key de Vendedor.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      database.ref('Vendedores/' + keyInput).once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data || data.status !== 'ativa') {
+          errorMsg.innerText = "Key de vendedor inválida ou desativada.";
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        vendedorAtual = data;
+        vendedorKeyGlobal = keyInput;
+
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('mainPanel').style.display = 'grid';
+        document.getElementById('vendedorKeyDisplay').innerText = keyInput;
+        document.getElementById('vendedorNomeDisplay').innerText = data.nomeVendedor || 'Vendedor';
+        document.getElementById('creditosDisplay').innerText = data.creditos || 0;
 
         registrarLogVendedor("Acesso Realizado", "Acessou o painel de vendedor com sucesso.");
-        
-        database.ref('Vendedores/' + keyInput + '/creditos').on('value', (snap) => { 
-          const val = snap.val() || 0; 
-          vendedorAtual.creditos = val; 
-          document.getElementById('creditosDisplay').innerText = val; 
-        }); 
-        carregarMinhasKeys(); 
-      }); 
-    } 
+
+        database.ref('Vendedores/' + keyInput + '/creditos').on('value', (snap) => {
+          const val = snap.val() || 0;
+          vendedorAtual.creditos = val;
+          document.getElementById('creditosDisplay').innerText = val;
+        });
+
+        carregarMinhasKeys();
+      });
+    }
 
     function formatarTempo(ms) {
       if (ms <= 0) return "Expirada";
@@ -214,187 +488,216 @@
       }
     }
 
-    function carregarMinhasKeys() { 
-      const nomeVendedor = vendedorAtual.nomeVendedor || vendedorKeyGlobal; 
-      const tbody = document.getElementById('minhasKeysBody'); 
-      database.ref('Painel_Usuarios').on('value', (snapshot) => { 
-        tbody.innerHTML = ''; 
-        const data = snapshot.val(); 
-        if (!data) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
-        let encontrou = false; 
+    function carregarMinhasKeys() {
+      const nomeVendedor = vendedorAtual.nomeVendedor || vendedorKeyGlobal;
+      const tbody = document.getElementById('minhasKeysBody');
+
+      database.ref('Painel_Usuarios').on('value', (snapshot) => {
+        tbody.innerHTML = '';
+        const data = snapshot.val();
+        if (!data) return tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>';
+
+        let encontrou = false;
         const agora = Date.now();
 
-        for (let key in data) { 
-          const item = data[key]; 
-          if (item.geradaPor === nomeVendedor || item.geradaPor === vendedorKeyGlobal) { 
-            encontrou = true; 
-            let tempoRestanteText = "Expirada"; 
+        for (let key in data) {
+          const item = data[key];
+          if (item.geradaPor === nomeVendedor || item.geradaPor === vendedorKeyGlobal) {
+            encontrou = true;
+            let tempoRestanteText = "Expirada";
 
             if (item.status === "Não Ativada") {
               const duracaoMs = parseFloat(item.dias || 0);
               tempoRestanteText = formatarTempo(duracaoMs) + " (Aguardando Ativação)";
-            } else if (item.dias) { 
+            } else if (item.dias) {
               const expiraEm = parseFloat(item.dias);
-              const msRestantes = expiraEm - agora; 
+              const msRestantes = expiraEm - agora;
               tempoRestanteText = formatarTempo(msRestantes);
-            } 
+            }
 
-            tbody.innerHTML += ` 
-              <tr> 
-                <td style="font-family: monospace; font-weight: bold; color: var(--purple-glow);">${item.key || key}</td> 
-                <td>${tempoRestanteText}</td> 
-                <td><strong style="color: ${item.status === 'Online' ? 'var(--green)' : (item.status === 'Não Ativada' ? '#ffaa00' : 'var(--red-status)')}">${item.status || 'Offline'}</strong></td> 
-                <td style="font-size:0.75rem; font-family: monospace; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.id || 'Nenhum (Livre)'}</td> 
-                <td> 
-                  <div class="action-btns"> 
-                    <button class="btn-warning" onclick="vendedorAlternarStatusKey('${key}')">${item.status === 'Online' ? 'Pausar' : 'Ativar'}</button> 
-                    <button class="btn-success" onclick="vendedorRenovarKey('${key}')">Renovar</button> 
-                    <button onclick="vendedorResetarHWID('${key}')">Reset ID</button> 
-                    <button class="btn-danger" onclick="vendedorExcluirKey('${key}')">Excluir</button> 
-                  </div> 
-                </td> 
-              </tr> 
-            `; 
-          } 
-        } 
-        if (!encontrou) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>'; 
-      }); 
-    } 
+            tbody.innerHTML += `
+              <tr>
+                <td style="font-family: monospace; font-weight: bold; color: var(--purple-glow);">${item.key || key}</td>
+                <td>${tempoRestanteText}</td>
+                <td><strong style="color: ${item.status === 'Online' ? 'var(--green)' : (item.status === 'Não Ativada' ? '#ffaa00' : 'var(--red-status)')}">${item.status || 'Offline'}</strong></td>
+                <td style="font-size:0.75rem; font-family: monospace; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.id || 'Nenhum (Livre)'}</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="btn-warning" onclick="vendedorAlternarStatusKey('${key}')">${item.status === 'Online' ? 'Pausar' : 'Ativar'}</button>
+                    <button class="btn-success" onclick="vendedorRenovarKey('${key}')">Renovar</button>
+                    <button onclick="vendedorResetarHWID('${key}')">Reset ID</button>
+                    <button class="btn-danger" onclick="vendedorExcluirKey('${key}')">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }
+        }
+        if (!encontrou) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Você ainda não gerou nenhuma key.</td></tr>';
+      });
+    }
 
-    function sairPainel() { 
-      vendedorAtual = null; 
-      vendedorKeyGlobal = null; 
-      document.getElementById('vendorKeyInput').value = ''; 
-      document.getElementById('outputCliente').style.display = 'none'; 
-      document.getElementById('mainPanel').style.display = 'none'; 
-      document.getElementById('loginCard').style.display = 'block'; 
-    } 
+    function sairPainel() {
+      vendedorAtual = null;
+      vendedorKeyGlobal = null;
+      document.getElementById('vendorKeyInput').value = '';
+      document.getElementById('outputCliente').style.display = 'none';
+      document.getElementById('mainPanel').style.display = 'none';
+      document.getElementById('loginCard').style.display = 'block';
+    }
 
-    function gerarAlfanumerico(tamanho) { 
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; 
-      let res = ''; 
-      for (let i = 0; i < tamanho; i++) res += chars.charAt(Math.floor(Math.random() * chars.length)); 
-      return res; 
-    } 
+    function gerarAlfanumerico(tamanho) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let res = '';
+      for (let i = 0; i < tamanho; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+      return res;
+    }
 
-    async function gerarChaveProgressiva(prefixo, caminhoFirebase) { 
-      const snapshot = await database.ref(caminhoFirebase).once('value'); 
-      const chavesExistentes = snapshot.val() || {}; 
-      for (let tamanho = 4; tamanho <= 12; tamanho++) { 
-        for (let t = 0; t < 30; t++) { 
-          const codigo = prefixo + gerarAlfanumerico(tamanho); 
-          if (!chavesExistentes[codigo]) return codigo; 
-        } 
-      } 
-      return null; 
-    } 
+    async function gerarChaveProgressiva(prefixo, caminhoFirebase) {
+      const snapshot = await database.ref(caminhoFirebase).once('value');
+      const chavesExistentes = snapshot.val() || {};
+      for (let tamanho = 4; tamanho <= 12; tamanho++) {
+        for (let t = 0; t < 30; t++) {
+          const codigo = prefixo + gerarAlfanumerico(tamanho);
+          if (!chavesExistentes[codigo]) return codigo;
+        }
+      }
+      return null;
+    }
 
-    async function gerarKeyCliente() { 
-      const planoSelecionado = document.getElementById('selectPlano').value; 
+    async function gerarKeyCliente() {
+      const planoSelecionado = document.getElementById('selectPlano').value;
       const config = CONFIG_PLANOS[planoSelecionado];
+      if (!config) return mostrarPopup("Plano inválido.");
 
-      if (!config) return alert("Plano inválido.");
+      let qtdInput = document.getElementById('qtdKeys').value.trim();
+      let qtd = parseInt(qtdInput);
+      if (isNaN(qtd) || qtd < 1) qtd = 1;
 
-      const custoCreditos = config.creditos; 
-      const out = document.getElementById('outputCliente'); 
+      const custoTotal = config.creditos * qtd;
+      const out = document.getElementById('outputCliente');
 
-      if (vendedorAtual.creditos < custoCreditos) { 
-        return alert(`Saldo insuficiente. O plano de ${config.label} custa ${custoCreditos} crédito(s).`); 
-      } 
+      if (vendedorAtual.creditos < custoTotal) {
+        return mostrarPopup(`Saldo insuficiente. Gerar ${qtd} key(s) de ${config.label} custa ${custoTotal} crédito(s).`);
+      }
 
-      const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Painel_Usuarios'); 
+      let chavesGeradas = [];
+      const updates = {};
 
-      const dadosKey = { 
-        key: codigoKey, 
-        status: "Não Ativada", 
-        dias: config.ms.toString(), 
-        id: "", 
-        geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal,
-        custoCredito: custoCreditos,
-        criadaEm: Date.now()
-      }; 
+      for (let i = 0; i < qtd; i++) {
+        const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Painel_Usuarios');
+        chavesGeradas.push(codigoKey);
 
-      const novosCreditos = vendedorAtual.creditos - custoCreditos; 
-      await database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos }); 
-      await database.ref('Painel_Usuarios/' + codigoKey).set(dadosKey); 
-      
-      registrarLogVendedor("Gerou Key", `Gerou a Key ${codigoKey} (${config.label}) por ${custoCreditos} crédito.`);
+        updates['Painel_Usuarios/' + codigoKey] = {
+          key: codigoKey,
+          status: "Não Ativada",
+          dias: config.ms.toString(),
+          id: "",
+          geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal,
+          custoCredito: config.creditos,
+          criadaEm: Date.now()
+        };
+      }
 
-      out.style.display = 'block'; 
-      out.innerText = codigoKey; 
-      alert(`Key gerada com sucesso! ${custoCreditos} crédito descontado. A contagem só iniciará no primeiro uso.`); 
-    } 
+      const novosCreditos = vendedorAtual.creditos - custoTotal;
+      updates['Vendedores/' + vendedorKeyGlobal + '/creditos'] = novosCreditos;
 
-    function vendedorAlternarStatusKey(key) { 
-      database.ref('Painel_Usuarios/' + key).once('value', (snap) => { 
-        const data = snap.val(); 
-        if (!data) return; 
+      await database.ref().update(updates);
+
+      registrarLogVendedor("Gerou Key", `Gerou ${qtd} Key(s) (${config.label}) por ${custoTotal} crédito(s).`);
+
+      const textoFinal = chavesGeradas.join('\n');
+      out.style.display = 'block';
+      out.innerText = textoFinal;
+
+      navigator.clipboard.writeText(textoFinal).catch(() => {});
+
+      mostrarPopup(`${qtd} Key(s) gerada(s) com sucesso!\n${custoTotal} crédito(s) descontado(s).\n\nAs chaves foram COPIADAS AUTOMATICAMENTE!`);
+    }
+
+    function vendedorAlternarStatusKey(key) {
+      database.ref('Painel_Usuarios/' + key).once('value', (snap) => {
+        const data = snap.val();
+        if (!data) return;
 
         if (data.status === "Não Ativada") {
           const duracaoMs = parseFloat(data.dias || 0);
           const timestampExpiracao = Date.now() + duracaoMs;
-          database.ref('Painel_Usuarios/' + key).update({ status: 'Online', dias: timestampExpiracao.toString() })
-            .then(() => {
-              registrarLogVendedor("Ativou Key", `Ativou a Key ${key}. Contagem iniciada.`);
-              alert("Key ativada com sucesso!");
-            });
-        } else {
-          const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online'; 
-          database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }) 
-            .then(() => {
-              registrarLogVendedor("Alterou Status", `Alterou status da Key ${key} para ${novoStatus}.`);
-              alert("Status alterado para: " + novoStatus);
-            }); 
-        }
-      }); 
-    } 
 
-    function vendedorRenovarKey(key) { 
-      const opcao = prompt("Digite o código da validade para renovar:\n(1h, 6h, 12h, 1d, 3d, 7d, 15d, 30d)"); 
-      if (!opcao || !CONFIG_PLANOS[opcao]) { 
-        return alert("Opção inválida!"); 
-      } 
+          database.ref('Painel_Usuarios/' + key).update({
+            status: 'Online',
+            dias: timestampExpiracao.toString()
+          }).then(() => {
+            registrarLogVendedor("Ativou Key", `Ativou a Key ${key}. Contagem iniciada.`);
+            mostrarPopup("Key ativada com sucesso!");
+          });
+        } else {
+          const novoStatus = (data.status === 'Online') ? 'Offline' : 'Online';
+          database.ref('Painel_Usuarios/' + key).update({ status: novoStatus }).then(() => {
+            registrarLogVendedor("Alterou Status", `Alterou status da Key ${key} para ${novoStatus}.`);
+            mostrarPopup("Status alterado para: " + novoStatus);
+          });
+        }
+      });
+    }
+
+    async function vendedorRenovarKey(key) {
+      const opcao = await mostrarPrompt("Digite o código da validade para renovar:\n(1h, 6h, 12h, 1d, 3d, 7d, 15d, 30d)", "Ex: 1d");
+      if (!opcao || !CONFIG_PLANOS[opcao]) {
+        return mostrarPopup("Opção inválida!");
+      }
+
       const config = CONFIG_PLANOS[opcao];
-      const custo = config.creditos; 
-      if (vendedorAtual.creditos < custo) { 
-        return alert(`Saldo insuficiente! Adicionar ${config.label} custa ${custo} crédito(s).`); 
-      } 
-      database.ref('Painel_Usuarios/' + key).once('value', (snap) => { 
-        const data = snap.val(); 
-        if (!data) return; 
-        if (confirm(`Confirmar renovação de ${config.label} por ${custo} crédito(s)?`)) { 
-          const novosCreditos = vendedorAtual.creditos - custo; 
-          database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos }); 
-          
-          const msAdicionais = config.ms; 
+      const custo = config.creditos;
+
+      if (vendedorAtual.creditos < custo) {
+        return mostrarPopup(`Saldo insuficiente! Adicionar ${config.label} custa ${custo} crédito(s).`);
+      }
+
+      database.ref('Painel_Usuarios/' + key).once('value', async (snap) => {
+        const data = snap.val();
+        if (!data) return;
+
+        const confirmou = await mostrarConfirmacao(`Confirmar renovação de ${config.label} por ${custo} crédito(s)?`);
+        if (confirmou) {
+          const novosCreditos = vendedorAtual.creditos - custo;
+          database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
+
+          const msAdicionais = config.ms;
           if (data.status === "Não Ativada") {
             const duracaoAtual = parseFloat(data.dias || 0);
-            database.ref('Painel_Usuarios/' + key).update({ dias: (duracaoAtual + msAdicionais).toString() });
+            database.ref('Painel_Usuarios/' + key).update({
+              dias: (duracaoAtual + msAdicionais).toString()
+            });
           } else {
-            const expiraAtual = parseFloat(data.dias || Date.now()); 
-            const baseTempo = Math.max(expiraAtual, Date.now()); 
-            const novoTimestamp = baseTempo + msAdicionais; 
-            database.ref('Painel_Usuarios/' + key).update({ dias: novoTimestamp.toString(), status: 'Online' });
+            const expiraAtual = parseFloat(data.dias || Date.now());
+            const baseTempo = Math.max(expiraAtual, Date.now());
+            const novoTimestamp = baseTempo + msAdicionais;
+            database.ref('Painel_Usuarios/' + key).update({
+              dias: novoTimestamp.toString(),
+              status: 'Online'
+            });
           }
 
           registrarLogVendedor("Renovou Key", `Renovou a Key ${key} por +${config.label} (${custo} crédito(s)).`);
-          alert("Key renovada!"); 
-        } 
-      }); 
-    } 
+          mostrarPopup("Key renovada!");
+        }
+      });
+    }
 
-    function vendedorResetarHWID(key) { 
-      if (confirm("Resetar o dispositivo/HWID desta key?")) { 
-        database.ref('Painel_Usuarios/' + key).update({ id: "" }) 
-          .then(() => {
-            registrarLogVendedor("Reset HWID", `Resetou o HWID da Key ${key}.`);
-            alert("ID do dispositivo resetado com sucesso!");
-          }); 
-      } 
-    } 
+    async function vendedorResetarHWID(key) {
+      const confirmou = await mostrarConfirmacao("Resetar o dispositivo/HWID desta key?");
+      if (confirmou) {
+        database.ref('Painel_Usuarios/' + key).update({ id: "" }).then(() => {
+          registrarLogVendedor("Reset HWID", `Resetou o HWID da Key ${key}.`);
+          mostrarPopup("ID do dispositivo resetado com sucesso!");
+        });
+      }
+    }
 
-    function vendedorExcluirKey(key) { 
-      if (confirm("Excluir definitivamente esta key?")) { 
+    async function vendedorExcluirKey(key) {
+      const confirmou = await mostrarConfirmacao("Excluir definitivamente esta key?");
+      if (confirmou) {
         database.ref('Painel_Usuarios/' + key).once('value', (snap) => {
           const data = snap.val();
           if (!data) return;
@@ -407,17 +710,16 @@
           if (data.criadaEm && tempoDecorrido <= umaHoraEmMs) {
             const novosCreditos = (vendedorAtual.creditos || 0) + custo;
             database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
-            alert(`Key excluída dentro de 1 hora! ${custo} crédito(s) foram devolvidos.`);
+            mostrarPopup(`Key excluída dentro de 1 hora! ${custo} crédito(s) foram devolvidos.`);
             registrarLogVendedor("Excluiu Key (Estorno)", `Excluiu a Key ${key} dentro de 1h e recebeu ${custo} crédito(s) de volta.`);
           } else {
-            alert("Key excluída! Passado mais de 1 hora da criação, o crédito não foi devolvido.");
+            mostrarPopup("Key excluída! Passado mais de 1 hora da criação, o crédito não foi devolvido.");
             registrarLogVendedor("Excluiu Key", `Excluiu permanentemente a Key ${key}.`);
           }
-
           database.ref('Painel_Usuarios/' + key).remove();
         });
-      } 
-    } 
-  </script> 
-</body> 
+      }
+    }
+  </script>
+</body>
 </html>
