@@ -162,7 +162,6 @@
     .error-msg { color: var(--red-status); font-size: 0.85rem; margin-top: 0.8rem; text-align: center; display: none; }
     .action-btns { display: flex; gap: 0.3rem; }
 
-    /* Estilos do Popup Modal */
     .lunar-modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -300,7 +299,6 @@
     </div>
   </div>
 
-  <!-- Componente de Modal Popup Customizado -->
   <div id="lunarModalOverlay" class="lunar-modal-overlay">
     <div class="lunar-modal">
       <h3 id="lunarModalTitle">LUNAR CHEATS</h3>
@@ -601,10 +599,12 @@
         const codigoKey = await gerarChaveProgressiva('LUNAR-', 'Painel_Usuarios');
         chavesGeradas.push(codigoKey);
 
+        // MODIFICAÇÃO SOLICITADA: Online, Não Ativada, Id- 0 (dias guarda o timestamp final de expiração a partir de agora já Online)
+        const timestampExpiracao = Date.now() + config.ms;
         updates['Painel_Usuarios/' + codigoKey] = {
           key: codigoKey,
-          status: "Não Ativada",
-          dias: config.ms.toString(),
+          status: "Online",
+          dias: timestampExpiracao.toString(),
           id: "0",
           geradaPor: vendedorAtual.nomeVendedor || vendedorKeyGlobal,
           custoCredito: config.creditos,
@@ -652,20 +652,14 @@
           database.ref('Vendedores/' + vendedorKeyGlobal).update({ creditos: novosCreditos });
 
           const msAdicionais = config.ms;
-          if (data.status === "Não Ativada") {
-            const duracaoAtual = parseFloat(data.dias || 0);
-            database.ref('Painel_Usuarios/' + key).update({
-              dias: (duracaoAtual + msAdicionais).toString()
-            });
-          } else {
-            const expiraAtual = parseFloat(data.dias || Date.now());
-            const baseTempo = Math.max(expiraAtual, Date.now());
-            const novoTimestamp = baseTempo + msAdicionais;
-            database.ref('Painel_Usuarios/' + key).update({
-              dias: novoTimestamp.toString(),
-              status: 'Online'
-            });
-          }
+          const expiraAtual = parseFloat(data.dias || Date.now());
+          const baseTempo = Math.max(expiraAtual, Date.now());
+          const novoTimestamp = baseTempo + msAdicionais;
+          
+          database.ref('Painel_Usuarios/' + key).update({
+            dias: novoTimestamp.toString(),
+            status: 'Online'
+          });
 
           registrarLogVendedor("Renovou Key", `Renovou a Key ${key} por +${config.label} (${custo} crédito(s)).`);
           mostrarPopup("Key renovada!");
